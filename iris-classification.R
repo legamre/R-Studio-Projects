@@ -1,8 +1,6 @@
 > library(datasets)
 > data("iris")
-> 
 > iris <- datasets::iris
-> View(iris)
 > View(iris)
 > iris$Petal.Length
 > iris$Species

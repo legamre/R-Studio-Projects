@@ -46,6 +46,10 @@ Model <- train(Y ~ ., data = TrainingSet,
                trControl= trainControl(method="none"),
                tuneGrid = data.frame(degree=1,scale=1,C=1))
 
+# Removing zero variance variables
+zero_var_cols <- nearZeroVar(TrainingSet)
+TrainingSet <- TrainingSet[, -zero_var_cols]
+
 # Building a CV model
 Model.cv <- train(Y ~ ., data = TrainingSet,
                   method = "svmPoly",

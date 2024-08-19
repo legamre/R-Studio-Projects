@@ -60,11 +60,13 @@ Model.cv <- train(Y ~ ., data = TrainingSet,
 
 
 # Applying model for prediction
-Model.training <-predict(Model, TrainingSet) # Apply model to make prediction on Training set
-Model.testing <-predict(Model, TestingSet) # Apply model to make prediction on Testing set
-Model.cv <-predict(Model.cv, TrainingSet) # Perform cross-validation
+Model.training <-predict(Model, TrainingSet) 
+Model.testing <-predict(Model, TestingSet)
 
-# Model performance (Displays confusion matrix and statistics)
+# Performing cross-validation
+Model.cv <-predict(Model.cv, TrainingSet) 
+
+# Model performance - displaying confusion matrix and statistics
 Model.training.confusion <-confusionMatrix(Model.training, TrainingSet$Y)
 Model.testing.confusion <-confusionMatrix(Model.testing, TestingSet$Y)
 Model.cv.confusion <-confusionMatrix(Model.cv, TrainingSet$Y)
@@ -95,7 +97,7 @@ dhfr <- na.gen(dhfr,100)
 # Alternative
 dhfr <- na.gen(n=100,data=dhfr)
 
-# Checking again for missing data
+# Checking for missing data again
 sum(is.na(dhfr))
 colSums(is.na(dhfr))
 str(dhfr)
@@ -131,5 +133,76 @@ sum(is.na(dhfr.impute))
 
 # Performing stratified random split of the data set
 TrainingIndex <- createDataPartition(dhfr$Y, p=0.8, list = FALSE)
-TrainingSet <- dhfr[TrainingIndex,] # Training Set
-TestingSet <- dhfr[-TrainingIndex,] # Test Set
+TrainingSet <- dhfr[TrainingIndex,]
+TestingSet <- dhfr[-TrainingIndex,] 
+
+# Random forest
+# Running normally without parallel processing
+# Building model using training set and learning the algorithm
+start.time <- proc.time()
+Model <- train(Y ~ ., 
+               data = TrainingSet, 
+               method = "rf" 
+         )
+stop.time <- proc.time()
+run.time <- stop.time - start.time
+print(run.time)
+
+# Using parallel processing
+library(doParallel)
+
+cl <- makePSOCKcluster(5)
+registerDoParallel(cl)
+
+start.time <- proc.time()
+Model <- train(Y ~ ., 
+               data = TrainingSet, 
+               method = "rf" 
+         )
+stop.time <- proc.time()
+run.time <- stop.time - start.time
+print(run.time)
+
+stopCluster(cl)
+
+# Run without parallel processing again
+start.time <- proc.time()
+Model <- train(Y ~ ., 
+               data = TrainingSet, 
+               method = "rf", 
+               tuneGrid = data.frame(mtry = seq(5,15, by=5))
+         )
+stop.time <- proc.time()
+run.time <- stop.time - start.time
+print(run.time)
+
+# Using doParallel
+library(doParallel)
+
+cl <- makePSOCKcluster(5)
+registerDoParallel(cl)
+
+start.time <- proc.time()
+Model <- train(Y ~ ., 
+               data = TrainingSet, 
+               method = "rf",
+               tuneGrid = data.frame(mtry = seq(5,15, by=5))
+         )
+stop.time <- proc.time()
+run.time <- stop.time - start.time
+print(run.time)
+
+stopCluster(cl)
+
+# Applying model for prediction on Training set
+Model.training <-predict(Model, TrainingSet) 
+
+# Model performance
+Model.training.confusion <-confusionMatrix(Model.training, TrainingSet$Y)
+
+print(Model.training.confusion)
+
+# Feature importance
+Importance <- varImp(Model)
+plot(Importance, top = 25)
+plot(Importance, col = "red")

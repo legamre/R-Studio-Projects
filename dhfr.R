@@ -1,6 +1,7 @@
 # Importing the dhfr dataset
 library(datasets)
 library(caret)
+ibrary(e1071)
 data(dhfr)
 
 # Finding basic statistics
@@ -39,6 +40,11 @@ TrainingIndex <- createDataPartition(dhfr$Y, p=0.8, list = FALSE)
 TrainingSet <- dhfr[TrainingIndex,] # Training Set
 TestingSet <- dhfr[-TrainingIndex,] # Test Set
 
+# Removing zero variance variables
+zero_var_cols <- nearZeroVar(TrainingSet)
+TrainingSet <- TrainingSet[, -zero_var_cols]
+TestingSet <- TestingSet[, -zero_var_cols]  # Remove zero variance variables from the test set as well
+
 # Building a Training model
 Model <- train(Y ~ ., data = TrainingSet,
                method = "svmPoly",
@@ -46,10 +52,6 @@ Model <- train(Y ~ ., data = TrainingSet,
                preProcess=c("scale","center"),
                trControl= trainControl(method="none"),
                tuneGrid = data.frame(degree=1,scale=1,C=1))
-
-# Removing zero variance variables
-zero_var_cols <- nearZeroVar(TrainingSet)
-TrainingSet <- TrainingSet[, -zero_var_cols]
 
 # Building a CV model
 Model.cv <- train(Y ~ ., data = TrainingSet,
@@ -59,18 +61,15 @@ Model.cv <- train(Y ~ ., data = TrainingSet,
                   trControl= trainControl(method="cv", number=10),
                   tuneGrid = data.frame(degree=1,scale=1,C=1))
 
-
 # Applying model for prediction
-Model.training <-predict(Model, TrainingSet) 
-Model.testing <-predict(Model, TestingSet)
-
-# Performing cross-validation
-Model.cv <-predict(Model.cv, TrainingSet) 
+Model.training <- predict(Model, TrainingSet)
+Model.testing <- predict(Model, TestingSet)
+Model.cv.predictions <- predict(Model.cv, TrainingSet)
 
 # Model performance - displaying confusion matrix and statistics
-Model.training.confusion <-confusionMatrix(Model.training, TrainingSet$Y)
-Model.testing.confusion <-confusionMatrix(Model.testing, TestingSet$Y)
-Model.cv.confusion <-confusionMatrix(Model.cv, TrainingSet$Y)
+Model.training.confusion <- confusionMatrix(Model.training, TrainingSet$Y)
+Model.testing.confusion <- confusionMatrix(Model.testing, TestingSet$Y)
+Model.cv.confusion <- confusionMatrix(Model.cv.predictions, TrainingSet$Y)
 
 print(Model.training.confusion)
 print(Model.testing.confusion)

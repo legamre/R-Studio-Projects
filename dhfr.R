@@ -1,7 +1,11 @@
 # Importing the dhfr dataset
 library(datasets)
 library(caret)
-ibrary(e1071)
+library(e1071)
+library(dplyr)
+library(skimr)
+library(doParallel)
+
 data(dhfr)
 
 # Finding basic statistics
@@ -12,19 +16,17 @@ summary(dhfr$Y)
 sum(is.na(dhfr))
 
 # Expanding basic statistics
-library(skimr)
 skim(dhfr)
 
- # Expanding basic statistics after grouping data by biological activity
+# Expanding basic statistics after grouping data by biological activity
 dhfr %>%
-  dplyr::group_by(Y) %>%
+  group_by(Y) %>%
   skim()
 
 # Scatter plot
 plot(dhfr$moe2D_zagreb, dhfr$moe2D_weinerPol, col = "red", xlab = "moe2D_zagreb", ylab = "moe2D_weinerPol")
 
 # Feature plots
-library(caret)
 featurePlot(x = dhfr[,2:21],
             y = dhfr$Y,
             plot = "box",
@@ -75,7 +77,7 @@ print(Model.training.confusion)
 print(Model.testing.confusion)
 print(Model.cv.confusion)
 
-# Featuring importance
+# Feature importance
 Importance <- varImp(Model)
 plot(Importance, top = 25)
 plot(Importance, col = "red")
@@ -115,25 +117,20 @@ sum(is.na(clean.data))
 # 2. Imputation: Replacing missing values with the column's 
 # MEAN
 dhfr.impute <- dhfr
-
 for (i in which(sapply(dhfr.impute, is.numeric))) { 
   dhfr.impute[is.na(dhfr.impute[, i]), i] <- mean(dhfr.impute[, i],  na.rm = TRUE) 
 }
-
 sum(is.na(dhfr.impute))
 
 # MEDIAN
 dhfr.impute <- dhfr
-
 for (i in which(sapply(dhfr.impute, is.numeric))) { 
   dhfr.impute[is.na(dhfr.impute[, i]), i] <- median(dhfr.impute[, i],  na.rm = TRUE) 
 }
-
 sum(is.na(dhfr.impute))
 
 # Random forest
 # Running normally without parallel processing
-# Building model using training set and learning the algorithm
 start.time <- proc.time()
 Model <- train(Y ~ ., 
                data = TrainingSet, 
@@ -144,8 +141,6 @@ run.time <- stop.time - start.time
 print(run.time)
 
 # Using parallel processing
-library(doParallel)
-
 cl <- makePSOCKcluster(5)
 registerDoParallel(cl)
 
@@ -171,9 +166,7 @@ stop.time <- proc.time()
 run.time <- stop.time - start.time
 print(run.time)
 
-# Using doParallel
-library(doParallel)
-
+# Using doParallel again
 cl <- makePSOCKcluster(5)
 registerDoParallel(cl)
 

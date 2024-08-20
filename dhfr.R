@@ -1,5 +1,6 @@
 # Importing the dhfr dataset
 library(datasets)
+library(caret)
 data(dhfr)
 
 # Finding basic statistics

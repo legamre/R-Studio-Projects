@@ -131,11 +131,6 @@ for (i in which(sapply(dhfr.impute, is.numeric))) {
 
 sum(is.na(dhfr.impute))
 
-# Performing stratified random split of the data set
-TrainingIndex <- createDataPartition(dhfr$Y, p=0.8, list = FALSE)
-TrainingSet <- dhfr[TrainingIndex,]
-TestingSet <- dhfr[-TrainingIndex,] 
-
 # Random forest
 # Running normally without parallel processing
 # Building model using training set and learning the algorithm
